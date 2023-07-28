@@ -31,6 +31,4 @@ COPY ssh-user-auth.sh /ssh-user-auth.sh
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod 755 /ssh-user-auth.sh /entrypoint.sh
 
-EXPOSE 22
-
 ENTRYPOINT ["/entrypoint.sh"]

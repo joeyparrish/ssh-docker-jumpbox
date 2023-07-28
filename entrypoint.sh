@@ -12,4 +12,4 @@ echo "JUMP_USER=\"$JUMP_USER\"" >> /etc/jump-settings
 echo "JUMP_PUBLIC_KEY=\"$JUMP_PUBLIC_KEY\"" >> /etc/jump-settings
 
 # Start the SSH daemon.
-exec /usr/sbin/sshd -D -e
+exec /usr/sbin/sshd -D -e -p "${JUMP_PORT:-22}"

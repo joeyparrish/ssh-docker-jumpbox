@@ -32,3 +32,17 @@ docker run \
     -e JUMP_PUBLIC_KEY="ssh-rsa G5k8URQHMcu1DU1A58WhE6yy foo@bar" \
     -p 1022:22 joeyparrish/ssh-jumpbox
 ```
+
+## Listening on a non-standard port
+
+If you don't want to map ports in the way shown above, you can also override
+the default SSH port of 22 with the `JUMP_PORT` environment variable:
+
+```sh
+docker run \
+    -d \
+    -e JUMP_USER="foo" \
+    -e JUMP_PUBLIC_KEY="ssh-rsa G5k8URQHMcu1DU1A58WhE6yy foo@bar" \
+    -e JUMP_PORT="1022" \
+    -p 1022 joeyparrish/ssh-jumpbox
+```

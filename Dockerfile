@@ -1,24 +1,36 @@
-FROM debian:stretch-slim
+FROM debian:trixie-slim
 
-MAINTAINER Irek Pelech
+MAINTAINER Joey Parrish
 
-ENV TERM=xterm-256color
+ENV DEBIAN_FRONTEND=noninteractive
 
-COPY ssh-user-auth.sh /usr/bin/ssh-user-auth.sh
-COPY entrypoint.sh /usr/bin/entrypoint.sh
+# Update packages and install sshd.
+RUN apt-get -q update
+RUN apt-get install -y --no-install-recommends openssh-server
+RUN mkdir /var/run/sshd
 
-RUN apt-get -q update \
-	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-		openssh-server netcat telnet curl \
-	&& mkdir /var/run/sshd \
-	&& echo "AuthorizedKeysCommand /usr/bin/ssh-user-auth.sh" >> /etc/ssh/sshd_config \
-  	&& echo "AuthorizedKeysCommandUser nobody" >> /etc/ssh/sshd_config \
-	&& apt-get clean autoclean \
-  	&& apt-get autoremove --yes \
-  	&& rm -rf /var/lib/{apt,dpkg,cache,log}/ \
-	&& chmod 755 /usr/bin/ssh-user-auth.sh \
-	&& chmod 755 /usr/bin/entrypoint.sh
+# Clean up after apt to slim down the image.
+RUN apt-get clean autoclean && \
+    apt-get autoremove --yes && \
+    rm -rf /var/lib/{apt,dpkg,cache,log}/
+
+# Only keys can be used to authenticate.
+RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+# No user-specific key files are checked.
+RUN echo "AuthorizedKeysFile none" >> /etc/ssh/sshd_config
+# Instead, we call this script to check user authentication.  It only
+# recognizes one user, and one key, both of which are specified through docker
+# environment variables.
+RUN echo "AuthorizedKeysCommand /ssh-user-auth.sh" >> /etc/ssh/sshd_config
+RUN echo "AuthorizedKeysCommandUser nobody" >> /etc/ssh/sshd_config
+# The user is allowed to set up tunnels.
+RUN echo "GatewayPorts yes" >> /etc/ssh/sshd_config
+
+# Install our custom scripts.
+COPY ssh-user-auth.sh /ssh-user-auth.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod 755 /ssh-user-auth.sh /entrypoint.sh
 
 EXPOSE 22
 
-ENTRYPOINT ["/usr/bin/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
